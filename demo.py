@@ -1,4 +1,4 @@
-# demo_fixed.py - Final Single File Version (Data Loading Fixed)
+# demo_excel_final.py - Final Version with Excel Data Loading and Correct Image Paths
 
 import streamlit as st
 import pandas as pd
@@ -24,149 +24,86 @@ ADMIN_USERNAME = "admin" # Simple admin username
 ADMIN_PASSWORD_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918" # Example hash for 'password'
 CONTACT_EMAIL = "oussama.sebrou@gmail.com"
 VISITOR_LOG_FILE = "visitor_log.txt" # Log file in the same directory as the app
+STUDENT_DATA_FILE = "student_data.xlsx" # Excel file name
+
 # Email sending configuration (User must configure these in deployment environment)
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com") # Default to Gmail SMTP
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587)) # Default to Gmail TLS port
 EMAIL_SENDER_USER = os.environ.get("EMAIL_SENDER_USER") # Sender email address (needs to be set as environment variable)
 EMAIL_SENDER_PASSWORD = os.environ.get("EMAIL_SENDER_PASSWORD") # Sender email password (needs to be set as environment variable)
 
-# --- Data Loading Function (FIXED) ---
+# --- Data Loading Function (Reads from Excel) ---
 @st.cache_data # Cache the data loading
-def load_student_data():
-    # Define expected column names for clarity and robustness
-    col_names = ['Name_Arabic', 'Evaluation', 'Test', 'Exam', 'Average']
+def load_student_data_from_excel(file_path):
+    """Loads student data dynamically from all sheets in an Excel file."""
+    try:
+        # Read all sheets into a dictionary of DataFrames
+        # sheet_name=None reads all sheets
+        all_sheets_data = pd.read_excel(file_path, sheet_name=None)
+    except FileNotFoundError:
+        st.error(f"خطأ: لم يتم العثور على ملف البيانات '{file_path}'. تأكد من وجود الملف في نفس مجلد التطبيق.")
+        return None
+    except Exception as e:
+        st.error(f"خطأ غير متوقع أثناء قراءة ملف Excel '{file_path}': {e}")
+        return None
 
-    # Data for Class 1: قسم الأولى ثانوي علوم - ذكور
-    data1 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
-حواش عبد اللطيف    16.0    17.0    13.0    14.60
-أداود طه    13.0    19.5    12.5    14.10
-إمناسن محسن    17.75    18.5    19.75    18.65
-الحاج موسى عبد العزيز    17.0    20.0    13.5    15.80
-الحاج موسى عبد الغني    19.0    20.0    20.0    19.20
-الهيشر عبد الرحمان    15.0    18.75    8.0    13.35
-بازين بكير    12.0    19.0    16.5    15.60
-باعمارة حسين    16.0    17.5    17.5    17.10
-برنوص خالد    18.0    19.25    20.0    18.65
-بن الناصر علي    16.0    19.0    19.75    18.50
-بهدي حمزة    18.0    19.5    20.0    19.10
-تحكوبيت نسيم    12.0    18.5    10.0    12.90
-hمودة عبد المجيد    16.0    19.0    10.5    14.60
-حواش إبراهيم    19.5    19.0    20.0    18.90
-حواش محمد    18.0    19.5    19.75    19.00
-دادي عدون سليم    15.0    19.5    11.5    14.90
-داود سليمان    12.0    17.0    13.5    14.00
-سكوتي عمر    19.0    20.0    20.0    19.00
-طباخ علي    17.0    20.0    18.0    17.80
-طباخ يحي زكرياء    13.0    19.0    10.0    13.00
-طباخ يوسف الصديق    19.0    20.0    20.0    19.00
-كراوة ياسين    20.0    20.0    20.0    19.90
-لمدهكل عبد النور    10.0    19.25    18.5    15.65
-لهزيل سلمان    19.0    20.0    20.0    19.60
-نشاشبي عبد الحكيم    14.0    19.5    16.0    16.30
-"""
-    # Use sep=r'\s+' to handle one or more spaces as delimiter, skip first row (header), provide names
-    df1 = pd.read_csv(io.StringIO(data1), sep=r'\s+', engine='python', skiprows=1, names=col_names)
+    processed_data = {}
+    expected_cols = ["اسم التلميذ", "التقويم", "الفرض", "الإختبار", "المعدل"]
+    expected_cols_alt = ["اسم التلميذة", "التقويم", "الفرض", "الإختبار", "المعدل"] # For girls' class
 
-    # Data for Class 2: قسم الثانية ثانوي تسيير واقتصاد
-    data2 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
-أميني ابراهيم    16.0    10.75    18.0    15.15
-الحاج سعيد محمد رضا    19.0    20.0    19.5    19.40
-الهيشر عبد الغني    14.0    19.75    15.0    15.15
-بازين يوسف    16.0    19.75    10.5    14.15
-بزملال سليم    18.0    20.0    20.0    19.60
-بن زكري زكري    15.75    17.5    11.0    14.15
-بوغلابة عادل    16.75    18.0    11.0    14.55
-زاوي إلياس    14.0    18.75    9.0    13.35
-شكال عفاري محمد    17.0    20.0    19.75    18.90
-عبد النور عبد اللطيف    16.0    20.0    20.0    18.80
-قصبي محمد أمين    15.0    16.75    19.5    16.75
-"""
-    df2 = pd.read_csv(io.StringIO(data2), sep=r'\s+', engine='python', skiprows=1, names=col_names)
+    for sheet_name, df in all_sheets_data.items():
+        # Check for expected columns (handling 'اسم التلميذة')
+        if list(df.columns) == expected_cols or list(df.columns) == expected_cols_alt:
+            # Rename 'اسم التلميذة' to 'اسم التلميذ' for consistency
+            if "اسم التلميذة" in df.columns:
+                df = df.rename(columns={"اسم التلميذة": "اسم التلميذ"})
 
-    # Data for Class 3: قسم الثانية ثانوي رياضيات
-    data3 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
-بوكرموش ياسين    19.75    19.0    20.0    19.75
-قصبي ياسر    19.75    20.0    20.0    19.95
-قضي امين عيسى    18.0    18.5    18.5    18.70
-مطياز لقمان الحكيم    20.0    19.0    20.0    19.80
-"""
-    df3 = pd.read_csv(io.StringIO(data3), sep=r'\s+', engine='python', skiprows=1, names=col_names)
+            # Use consistent internal column names
+            df.columns = ["Name_Arabic", "Evaluation", "Test", "Exam", "Average"]
+            df["Name"] = df["Name_Arabic"] # Keep consistent 'Name' column
 
-    # Data for Class 4: قسم الثانية ثانوي علوم تجريبية 1 - ذكور
-    data4 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
-أداود لقمان    18.0    17.0    16.0    16.70
-انشاشبي عبد الغني    17.0    19.5    19.5    18.90
-بازين أمين حبيب الله    19.0    20.0    18.75    19.20
-داود عبد الرحمان    17.0    19.5    20.0    18.90
-داودي محمد بن بكير    19.5    20.0    19.5    19.65
-رقيق الصادق رضوان    19.0    20.0    20.0    19.80
-عبونة يوسف    19.75    20.0    19.75    19.65
-عيسى ودادي عبد النور    18.0    18.5    10.5    14.70
-محرزي يوسف    18.0    18.5    20.0    19.20
-نجار يونس    16.0    19.75    18.5    17.35
-"""
-    df4 = pd.read_csv(io.StringIO(data4), sep=r'\s+', engine='python', skiprows=1, names=col_names)
-
-    # Data for Class 5: قسم الثانية ثانوي علوم تجريبية 2 - بنات
-    data5 = """اسم التلميذة    التقويم    الفرض    الإختبار    المعدل
-اداود سناء    20.0    20.0    20.0    20.00
-الشيهاني بشرى    19.75    19.75    20.0    19.90
-الشيهاني زينب    19.0    20.0    19.5    19.20
-الشيهاني وئام    20.0    20.0    19.75    19.70
-العلواني رحمة    18.0    19.5    16.0    17.50
-بعمور مريا    20.0    19.75    20.0    19.90
-بن سليمان لينة    20.0    20.0    20.0    20.00
-بهدي صبرينة    16.0    9.0    19.5    15.60
-بوسنان إسراء    20.0    20.0    20.0    20.00
-حاتة دليلة    18.0    8.0    15.0    14.40
-hبيرش ياسمين    16.0    20.0    17.5    17.40
-حواش عائشة إكرام    19.0    18.75    19.75    18.85
-سيوسيو مروة    18.0    19.5    15.0    17.30
-عدون سيرين    20.0    20.0    19.75    19.90
-لالوت سلمى    20.0    20.0    20.0    20.00
-نشاشبي كريمة    19.75    20.0    20.0    19.95
-"""
-    # Use specific names for this class initially
-    col_names_girls = ['Name_Arabic', 'Evaluation', 'Test', 'Exam', 'Average']
-    df5 = pd.read_csv(io.StringIO(data5), sep=r'\s+', engine='python', skiprows=1, names=col_names_girls)
-
-    # Combine into a dictionary
-    all_data = {
-        "قسم الأولى ثانوي علوم - ذكور": df1,
-        "قسم الثانية ثانوي تسيير واقتصاد": df2,
-        "قسم الثانية ثانوي رياضيات": df3,
-        "قسم الثانية ثانوي علوم تجريبية 1 - ذكور": df4,
-        "قسم الثانية ثانوي علوم تجريبية 2 - بنات": df5
-    }
-
-    # Standardize column names and types AFTER combining
-    for df in all_data.values():
-        # Ensure the columns exist before trying to convert
-        if all(col in df.columns for col in ['Evaluation', 'Test', 'Exam', 'Average']):
-            # Keep a consistent 'Name' column for matching (using the Arabic name)
-            df['Name'] = df['Name_Arabic']
             # Ensure numeric types
-            for col in ['Evaluation', 'Test', 'Exam', 'Average']:
-                 df[col] = pd.to_numeric(df[col], errors='coerce')
-            # Handle potential NaN values resulting from coercion errors if any
-            df.dropna(subset=['Evaluation', 'Test', 'Exam', 'Average'], inplace=True)
+            for col in ["Evaluation", "Test", "Exam", "Average"]:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
+            # Drop rows with any NaN values in numeric columns after conversion
+            original_rows = len(df)
+            df.dropna(subset=["Evaluation", "Test", "Exam", "Average"], inplace=True)
+            if len(df) < original_rows:
+                st.warning(f"تحذير في القسم '{sheet_name}': تم حذف بعض الصفوف بسبب بيانات غير رقمية في أعمدة العلامات.")
+
+            # Drop rows where name is NaN or empty
+            df.dropna(subset=["Name"], inplace=True)
+            df = df[df["Name"].astype(str).str.strip() != ""]
+
+            if not df.empty:
+                 processed_data[sheet_name] = df
+            else:
+                 st.warning(f"تحذير: القسم '{sheet_name}' فارغ أو لا يحتوي على بيانات صالحة بعد المعالجة.")
+
         else:
-            # Handle cases where columns might be missing due to read errors
-            print(f"Warning: DataFrame missing expected columns. Columns found: {df.columns}")
-            # Optionally, raise an error or return an empty structure
-            # raise ValueError(f"DataFrame missing expected columns. Columns found: {df.columns}")
+            st.error(f"خطأ في تنسيق القسم '{sheet_name}': الأعمدة المتوقعة هي {expected_cols} أو {expected_cols_alt} ولكن تم العثور على {list(df.columns)}. سيتم تجاهل هذا القسم.")
 
-    return all_data
+    if not processed_data:
+        st.error("لم يتم تحميل أي بيانات صالحة من الأقسام. يرجى التحقق من تنسيق ملف Excel.")
+        return None
 
-# --- Helper Functions ---
+    return processed_data
+
+# --- Helper Functions (Remain the same) ---
 
 def find_student(name_input, df):
     """Finds the student using fuzzy matching."""
+    if df is None or 'Name' not in df.columns:
+        return None, 0
     names = df['Name'].tolist()
+    if not names:
+        return None, 0
     # Use token_set_ratio for better matching with different word orders or partial names
     match = process.extractOne(name_input.strip(), names, scorer=fuzz.token_set_ratio, score_cutoff=75) # Adjust cutoff score if needed
     if match:
-        student_data = df[df['Name'] == match[0]].iloc[0]
+        # Use .loc for safer indexing
+        student_data = df.loc[df['Name'] == match[0]].iloc[0]
         return student_data, match[1] # Return data and score
     return None, 0
 
@@ -285,8 +222,6 @@ def log_visitor(page):
                     user_agent = session_info.client.user_agent
             except Exception:
                  # Fallback or check headers if deployed behind proxy
-                 # headers = st.experimental_get_query_params() # Older method
-                 # headers = st.query_params # Newer method - needs checking
                  pass # Keep as Unknown if unable to fetch
 
             f.write(f"{timestamp} - IP: {ip_address} - Page: {page} - UserAgent: {user_agent}\n")
@@ -297,12 +232,17 @@ def check_password(hashed_password, user_password):
     """Verifies the provided password against the stored hash."""
     return hashlib.sha256(user_password.encode()).hexdigest() == hashed_password
 
-# --- Load Data ---
+# --- Load Data --- (Now from Excel)
 try:
-    all_data = load_student_data()
-    CLASS_NAMES = list(all_data.keys())
+    all_data = load_student_data_from_excel(STUDENT_DATA_FILE)
+    if all_data:
+        CLASS_NAMES = list(all_data.keys())
+    else:
+        # Stop the app if data loading failed critically
+        st.error("توقف التطبيق بسبب فشل تحميل بيانات الأقسام.")
+        st.stop()
 except Exception as e:
-    st.error(f"خطأ فادح في تحميل بيانات التلاميذ: {e}")
+    st.error(f"خطأ فادح وغير متوقع عند محاولة تحميل البيانات: {e}")
     # Optionally log the full traceback for debugging
     # import traceback
     # st.error(traceback.format_exc())
@@ -324,28 +264,30 @@ st.sidebar.header("اختيار القسم والتلميذ")
 selected_class = st.sidebar.selectbox("اختر القسم:", CLASS_NAMES, index=None, placeholder="اختر القسم أولاً...") # Use index=None and placeholder
 
 if selected_class:
-    df_class = all_data[selected_class]
-    student_name_input = st.sidebar.text_input("أدخل اسم ولقب التلميذ:", key="student_name_input", placeholder="مثال: الحاج موسى عبد الغني")
-    search_button = st.sidebar.button("بحث عن النتائج")
+    df_class = all_data.get(selected_class) # Use .get for safety
+    if df_class is not None:
+        student_name_input = st.sidebar.text_input("أدخل اسم ولقب التلميذ:", key="student_name_input", placeholder="مثال: الحاج موسى عبد الغني")
+        search_button = st.sidebar.button("بحث عن النتائج")
 
-    if search_button and student_name_input:
-        log_visitor(f"Search: {selected_class} - '{student_name_input}'")
-        student_data, match_score = find_student(student_name_input, df_class)
+        if search_button and student_name_input:
+            log_visitor(f"Search: {selected_class} - '{student_name_input}'")
+            student_data, match_score = find_student(student_name_input, df_class)
 
-        if student_data is not None:
-            st.session_state['selected_student_data'] = student_data
-            st.session_state['selected_class'] = selected_class # Store selected class
-            st.sidebar.success(f"تم العثور على: {student_data['Name_Arabic']} (تطابق بنسبة {match_score}%)")
-            # Clear previous error messages if any
-            if 'search_error' in st.session_state: del st.session_state['search_error']
-        else:
-            st.session_state['selected_student_data'] = None
-            st.session_state['search_error'] = "لم يتم العثور على تلميذ بهذا الاسم في القسم المحدد. يرجى التأكد من الاسم والقسم والمحاولة مرة أخرى."
-            st.sidebar.error(st.session_state['search_error'])
+            if student_data is not None:
+                st.session_state['selected_student_data'] = student_data
+                st.session_state['selected_class'] = selected_class # Store selected class
+                st.sidebar.success(f"تم العثور على: {student_data['Name_Arabic']} (تطابق بنسبة {match_score}%)")
+                # Clear previous error messages if any
+                if 'search_error' in st.session_state: del st.session_state['search_error']
+            else:
+                st.session_state['selected_student_data'] = None
+                st.session_state['search_error'] = "لم يتم العثور على تلميذ بهذا الاسم في القسم المحدد. يرجى التأكد من الاسم والقسم والمحاولة مرة أخرى."
+                st.sidebar.error(st.session_state['search_error'])
 
-
-    elif not student_name_input and search_button:
-         st.sidebar.warning("يرجى إدخال اسم ولقب التلميذ للبحث.")
+        elif not student_name_input and search_button:
+             st.sidebar.warning("يرجى إدخال اسم ولقب التلميذ للبحث.")
+    else:
+        st.sidebar.error(f"خطأ داخلي: لم يتم العثور على بيانات للقسم المحدد '{selected_class}'.")
 
 # Display search error in main area if exists
 if 'search_error' in st.session_state and not st.session_state.get('selected_student_data'):
@@ -414,7 +356,7 @@ else:
      if 'search_error' not in st.session_state:
         st.info("يرجى اختيار القسم من القائمة الجانبية، ثم إدخال اسم التلميذ والضغط على زر البحث لعرض النتائج.")
 
-# --- Exam Paper Section (Using Relative Paths) ---
+# --- Exam Paper Section (Using Correct Relative Paths) ---
 st.sidebar.markdown("---")
 show_exam = st.sidebar.checkbox("عرض نموذج الاختبار وتصحيحه", key="show_exam_cb")
 
@@ -424,14 +366,14 @@ if show_exam:
     st.header("نموذج اختبار مادة الذكاء الاصطناعي وتصحيحه")
     st.write("المستوى: الثانية ثانوي رياضيات (نموذج)") # Specify it's an example
 
-    # Updated paths assuming images are in the same directory as the script (demo.py)
+    # Corrected image paths based on user's GitHub screenshot
     exam_image_paths = [
-        "1000007226.jpg", # Exam Page 1 - Relative path
-        "1000007227.jpg"  # Exam Page 2 - Relative path
+        "1748355922145.jpg", # Exam Page 1 - Relative path
+        "1748355927881.jpg"  # Exam Page 2 - Relative path
     ]
     correction_image_paths = [
-        "1000007228.jpg", # Correction Page 1 - Relative path
-        "1000007229.jpg"  # Correction Page 2 - Relative path
+        "IMG-20250522-WA0002.jpg", # Correction Page 1 - Relative path
+        "IMG-20250522-WA0003.jpg"  # Correction Page 2 - Relative path
     ]
 
     st.subheader("نموذج الاختبار:")
@@ -439,11 +381,15 @@ if show_exam:
     with img_col1:
         try:
             st.image(exam_image_paths[0], use_column_width=True)
+        except FileNotFoundError:
+             st.error(f"خطأ: لم يتم العثور على ملف الصورة '{exam_image_paths[0]}'. تأكد من وجوده في نفس مجلد التطبيق.")
         except Exception as e:
              st.error(f"خطأ في تحميل الصورة {os.path.basename(exam_image_paths[0])}: {e}")
     with img_col2:
         try:
             st.image(exam_image_paths[1], use_column_width=True)
+        except FileNotFoundError:
+             st.error(f"خطأ: لم يتم العثور على ملف الصورة '{exam_image_paths[1]}'. تأكد من وجوده في نفس مجلد التطبيق.")
         except Exception as e:
              st.error(f"خطأ في تحميل الصورة {os.path.basename(exam_image_paths[1])}: {e}")
 
@@ -453,11 +399,15 @@ if show_exam:
     with img_col3:
          try:
             st.image(correction_image_paths[0], use_column_width=True)
+         except FileNotFoundError:
+             st.error(f"خطأ: لم يتم العثور على ملف الصورة '{correction_image_paths[0]}'. تأكد من وجوده في نفس مجلد التطبيق.")
          except Exception as e:
              st.error(f"خطأ في تحميل الصورة {os.path.basename(correction_image_paths[0])}: {e}")
     with img_col4:
          try:
             st.image(correction_image_paths[1], use_column_width=True)
+         except FileNotFoundError:
+             st.error(f"خطأ: لم يتم العثور على ملف الصورة '{correction_image_paths[1]}'. تأكد من وجوده في نفس مجلد التطبيق.")
          except Exception as e:
              st.error(f"خطأ في تحميل الصورة {os.path.basename(correction_image_paths[1])}: {e}")
 
@@ -541,5 +491,5 @@ else:
 
 # --- Footer ---
 st.markdown("---")
-st.markdown("Deloped by.Mr Oussama SEBROU")
+st.markdown("Developed by Mr. Oussama SEBROU") # Corrected typo
 
