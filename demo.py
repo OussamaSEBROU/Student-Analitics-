@@ -1,5 +1,4 @@
-
-# app.py - Final Single File Version (Syntax Corrected)
+# demo_fixed.py - Final Single File Version (Data Loading Fixed)
 
 import streamlit as st
 import pandas as pd
@@ -31,9 +30,12 @@ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587)) # Default to Gmail TLS port
 EMAIL_SENDER_USER = os.environ.get("EMAIL_SENDER_USER") # Sender email address (needs to be set as environment variable)
 EMAIL_SENDER_PASSWORD = os.environ.get("EMAIL_SENDER_PASSWORD") # Sender email password (needs to be set as environment variable)
 
-# --- Data Loading Function (Merged from data_loader.py) ---
+# --- Data Loading Function (FIXED) ---
 @st.cache_data # Cache the data loading
 def load_student_data():
+    # Define expected column names for clarity and robustness
+    col_names = ['Name_Arabic', 'Evaluation', 'Test', 'Exam', 'Average']
+
     # Data for Class 1: قسم الأولى ثانوي علوم - ذكور
     data1 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
 حواش عبد اللطيف    16.0    17.0    13.0    14.60
@@ -48,7 +50,7 @@ def load_student_data():
 بن الناصر علي    16.0    19.0    19.75    18.50
 بهدي حمزة    18.0    19.5    20.0    19.10
 تحكوبيت نسيم    12.0    18.5    10.0    12.90
-حمودة عبد المجيد    16.0    19.0    10.5    14.60
+hمودة عبد المجيد    16.0    19.0    10.5    14.60
 حواش إبراهيم    19.5    19.0    20.0    18.90
 حواش محمد    18.0    19.5    19.75    19.00
 دادي عدون سليم    15.0    19.5    11.5    14.90
@@ -62,7 +64,8 @@ def load_student_data():
 لهزيل سلمان    19.0    20.0    20.0    19.60
 نشاشبي عبد الحكيم    14.0    19.5    16.0    16.30
 """
-    df1 = pd.read_csv(io.StringIO(data1), sep=r'\t', engine='python') # Use raw string for sep and specify engine
+    # Use sep=r'\s+' to handle one or more spaces as delimiter, skip first row (header), provide names
+    df1 = pd.read_csv(io.StringIO(data1), sep=r'\s+', engine='python', skiprows=1, names=col_names)
 
     # Data for Class 2: قسم الثانية ثانوي تسيير واقتصاد
     data2 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
@@ -78,7 +81,7 @@ def load_student_data():
 عبد النور عبد اللطيف    16.0    20.0    20.0    18.80
 قصبي محمد أمين    15.0    16.75    19.5    16.75
 """
-    df2 = pd.read_csv(io.StringIO(data2), sep=r'\t', engine='python') # Use raw string for sep and specify engine
+    df2 = pd.read_csv(io.StringIO(data2), sep=r'\s+', engine='python', skiprows=1, names=col_names)
 
     # Data for Class 3: قسم الثانية ثانوي رياضيات
     data3 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
@@ -87,7 +90,7 @@ def load_student_data():
 قضي امين عيسى    18.0    18.5    18.5    18.70
 مطياز لقمان الحكيم    20.0    19.0    20.0    19.80
 """
-    df3 = pd.read_csv(io.StringIO(data3), sep=r'\t', engine='python') # Use raw string for sep and specify engine
+    df3 = pd.read_csv(io.StringIO(data3), sep=r'\s+', engine='python', skiprows=1, names=col_names)
 
     # Data for Class 4: قسم الثانية ثانوي علوم تجريبية 1 - ذكور
     data4 = """اسم التلميذ    التقويم    الفرض    الإختبار    المعدل
@@ -102,7 +105,7 @@ def load_student_data():
 محرزي يوسف    18.0    18.5    20.0    19.20
 نجار يونس    16.0    19.75    18.5    17.35
 """
-    df4 = pd.read_csv(io.StringIO(data4), sep=r'\t', engine='python') # Use raw string for sep and specify engine
+    df4 = pd.read_csv(io.StringIO(data4), sep=r'\s+', engine='python', skiprows=1, names=col_names)
 
     # Data for Class 5: قسم الثانية ثانوي علوم تجريبية 2 - بنات
     data5 = """اسم التلميذة    التقويم    الفرض    الإختبار    المعدل
@@ -116,17 +119,16 @@ def load_student_data():
 بهدي صبرينة    16.0    9.0    19.5    15.60
 بوسنان إسراء    20.0    20.0    20.0    20.00
 حاتة دليلة    18.0    8.0    15.0    14.40
-حبيرش ياسمين    16.0    20.0    17.5    17.40
+hبيرش ياسمين    16.0    20.0    17.5    17.40
 حواش عائشة إكرام    19.0    18.75    19.75    18.85
 سيوسيو مروة    18.0    19.5    15.0    17.30
 عدون سيرين    20.0    20.0    19.75    19.90
 لالوت سلمى    20.0    20.0    20.0    20.00
 نشاشبي كريمة    19.75    20.0    20.0    19.95
 """
-    df5 = pd.read_csv(io.StringIO(data5), sep=r'\t', engine='python') # Use raw string for sep and specify engine
-    # Rename the first column for consistency
-    df5 = df5.rename(columns={'اسم التلميذة': 'اسم التلميذ'})
-
+    # Use specific names for this class initially
+    col_names_girls = ['Name_Arabic', 'Evaluation', 'Test', 'Exam', 'Average']
+    df5 = pd.read_csv(io.StringIO(data5), sep=r'\s+', engine='python', skiprows=1, names=col_names_girls)
 
     # Combine into a dictionary
     all_data = {
@@ -137,17 +139,22 @@ def load_student_data():
         "قسم الثانية ثانوي علوم تجريبية 2 - بنات": df5
     }
 
-    # Standardize column names and types
+    # Standardize column names and types AFTER combining
     for df in all_data.values():
-        # Preserve original Arabic names for display if needed later, but use English for code logic
-        df.columns = ['Name_Arabic', 'Evaluation', 'Test', 'Exam', 'Average']
-        df['Name'] = df['Name_Arabic'] # Keep a consistent 'Name' column for matching
-        # Ensure numeric types
-        for col in ['Evaluation', 'Test', 'Exam', 'Average']:
-             df[col] = pd.to_numeric(df[col], errors='coerce')
-        # Handle potential NaN values resulting from coercion errors if any
-        df.dropna(subset=['Evaluation', 'Test', 'Exam', 'Average'], inplace=True)
-
+        # Ensure the columns exist before trying to convert
+        if all(col in df.columns for col in ['Evaluation', 'Test', 'Exam', 'Average']):
+            # Keep a consistent 'Name' column for matching (using the Arabic name)
+            df['Name'] = df['Name_Arabic']
+            # Ensure numeric types
+            for col in ['Evaluation', 'Test', 'Exam', 'Average']:
+                 df[col] = pd.to_numeric(df[col], errors='coerce')
+            # Handle potential NaN values resulting from coercion errors if any
+            df.dropna(subset=['Evaluation', 'Test', 'Exam', 'Average'], inplace=True)
+        else:
+            # Handle cases where columns might be missing due to read errors
+            print(f"Warning: DataFrame missing expected columns. Columns found: {df.columns}")
+            # Optionally, raise an error or return an empty structure
+            # raise ValueError(f"DataFrame missing expected columns. Columns found: {df.columns}")
 
     return all_data
 
@@ -296,6 +303,9 @@ try:
     CLASS_NAMES = list(all_data.keys())
 except Exception as e:
     st.error(f"خطأ فادح في تحميل بيانات التلاميذ: {e}")
+    # Optionally log the full traceback for debugging
+    # import traceback
+    # st.error(traceback.format_exc())
     st.stop()
 
 
@@ -404,10 +414,7 @@ else:
      if 'search_error' not in st.session_state:
         st.info("يرجى اختيار القسم من القائمة الجانبية، ثم إدخال اسم التلميذ والضغط على زر البحث لعرض النتائج.")
 
-# --- Exam Paper Section ---
-import os # تأكد من إضافة هذا السطر في بداية ملف البايثون إذا لم يكن موجوداً
-
-# --- Exam Paper Section ---
+# --- Exam Paper Section (Using Relative Paths) ---
 st.sidebar.markdown("---")
 show_exam = st.sidebar.checkbox("عرض نموذج الاختبار وتصحيحه", key="show_exam_cb")
 
@@ -415,7 +422,6 @@ if show_exam:
     log_visitor("View Exam Paper")
     st.markdown("---")
     st.header("نموذج اختبار مادة الذكاء الاصطناعي وتصحيحه")
-    # Make the title dynamic based on class later if needed
     st.write("المستوى: الثانية ثانوي رياضيات (نموذج)") # Specify it's an example
 
     # Updated paths assuming images are in the same directory as the script (demo.py)
@@ -454,10 +460,6 @@ if show_exam:
             st.image(correction_image_paths[1], use_column_width=True)
          except Exception as e:
              st.error(f"خطأ في تحميل الصورة {os.path.basename(correction_image_paths[1])}: {e}")
-
-    # Removed the warning about paths as they are now relative
-
-
 
 # --- Contact Form Section ---
 st.sidebar.markdown("---")
