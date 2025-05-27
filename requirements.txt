@@ -3,3 +3,4 @@ pandas
 plotly
 fuzzywuzzy
 python-Levenshtein
+openpyxl
