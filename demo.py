@@ -405,6 +405,9 @@ else:
         st.info("يرجى اختيار القسم من القائمة الجانبية، ثم إدخال اسم التلميذ والضغط على زر البحث لعرض النتائج.")
 
 # --- Exam Paper Section ---
+import os # تأكد من إضافة هذا السطر في بداية ملف البايثون إذا لم يكن موجوداً
+
+# --- Exam Paper Section ---
 st.sidebar.markdown("---")
 show_exam = st.sidebar.checkbox("عرض نموذج الاختبار وتصحيحه", key="show_exam_cb")
 
@@ -415,18 +418,14 @@ if show_exam:
     # Make the title dynamic based on class later if needed
     st.write("المستوى: الثانية ثانوي رياضيات (نموذج)") # Specify it's an example
 
-    # Use absolute paths provided during upload
-    # IMPORTANT: These paths are specific to the Manus sandbox environment where they were uploaded.
-    # For deployment, these images need to be included with the app code (e.g., in an 'images' folder)
-    # and paths adjusted accordingly (e.g., "images/1000007226.jpg").
-    # For now, using the sandbox paths. User needs to be informed about this.
+    # Updated paths assuming images are in the same directory as the script (demo.py)
     exam_image_paths = [
-        "/home/ubuntu/upload/1000007226.jpg", # Exam Page 1
-        "/home/ubuntu/upload/1000007227.jpg"  # Exam Page 2
+        "1000007226.jpg", # Exam Page 1 - Relative path
+        "1000007227.jpg"  # Exam Page 2 - Relative path
     ]
     correction_image_paths = [
-        "/home/ubuntu/upload/1000007228.jpg", # Correction Page 1
-        "/home/ubuntu/upload/1000007229.jpg"  # Correction Page 2
+        "1000007228.jpg", # Correction Page 1 - Relative path
+        "1000007229.jpg"  # Correction Page 2 - Relative path
     ]
 
     st.subheader("نموذج الاختبار:")
@@ -456,7 +455,8 @@ if show_exam:
          except Exception as e:
              st.error(f"خطأ في تحميل الصورة {os.path.basename(correction_image_paths[1])}: {e}")
 
-    st.warning("ملاحظة: مسارات الصور المستخدمة هنا خاصة ببيئة التطوير الحالية. عند النشر، يجب وضع ملفات الصور مع التطبيق وتحديث المسارات في الكود.")
+    # Removed the warning about paths as they are now relative
+
 
 
 # --- Contact Form Section ---
